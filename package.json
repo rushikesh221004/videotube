@@ -1,0 +1,20 @@
+{
+  "name": "videotube",
+  "version": "1.0.0",
+  "description": "This is a videotube backend similar to youtube.",
+  "homepage": "https://github.com/rushikesh221004/videotube#readme",
+  "bugs": {
+    "url": "https://github.com/rushikesh221004/videotube/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rushikesh221004/videotube.git"
+  },
+  "license": "ISC",
+  "author": "Rushikesh Manjre",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
