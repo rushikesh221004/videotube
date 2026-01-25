@@ -18,18 +18,24 @@ const registerUser = asyncHandler(async (req, res) => {
   const { fullName, email, username, password } = req.body;
 
   if (
-      [fullName, email, username, password].some((val) => val?.trim() === "")
-    ) {
-        throw new ApiError(400, "All field are required");
-    }
-    
+    [fullName, email, username, password].some((val) => val?.trim() === "")
+  ) {
+    return res.status(400).json({
+      status: 400,
+      error: "All fields are required."
+    })
+  }
+
 
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
 
   if (existedUser) {
-    throw new ApiError(409, "User already exist.");
+    return res.status(409).json({
+      status: 409,
+      error: "User already exist."
+    })
   }
   // console.log("IMAGE FILES: ", req.files);
   const avatarLocalPath = req.files?.avatar[0]?.path;
@@ -37,14 +43,20 @@ const registerUser = asyncHandler(async (req, res) => {
   // console.log("coverImageLocalPath: ", avatarLocalPath);
 
   if (!avatarLocalPath) {
-    throw new ApiError(400, "Avatar file is required.");
+    return res.status(400).json({
+      status: 400,
+      error: "Avatar file is required."
+    })
   }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!avatar) {
-    throw new ApiError(400, "Avatar file is required");
+    return res.status(400).json({
+      status: 400,
+      error: "Avatar file is required."
+    })
   }
 
 
@@ -64,12 +76,17 @@ const registerUser = asyncHandler(async (req, res) => {
   );
 
   if (!createdUser) {
-    throw new ApiError(500, "Something went wrong while registering the user.");
+    return res.status(500).json({
+      status: 500,
+      error: "Something went wrong while registering the user."
+    })
   }
 
-  return res
-    .status(201)
-    .json(new ApiResponse(200, createdUser, "User registered successfully."));
+  return res.status(201).json({
+    status: 200,
+    message: "User registered successfully.",
+    data: createdUser
+  })
 });
 
 export { registerUser };
