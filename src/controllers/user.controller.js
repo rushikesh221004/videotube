@@ -122,7 +122,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const { username, email, password } = req.body;
 
-  if (!username || !email) {
+  if (!username && !email) {
     return res.status(400).json({
       status: 400,
       error: "username or email is required",
