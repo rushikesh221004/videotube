@@ -303,7 +303,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     });
   }
 
-  const user = await User.findById(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -321,6 +321,78 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
   });
 });
 
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+
+  if(!avatarLocalPath) {
+    return res.status(400).json({
+      status: 400,
+      error: "Avatar file is missing."
+    })
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if(!avatar.url) {
+    return res.status(400).json({
+      status: 400,
+      error: "Error while uploading avatar."
+    })
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatar.url
+      }
+    },
+    {new: true}
+  ).select("-password");
+
+  return res.status(200).json({
+    status: 200,
+    message: "Avatar file updated successfully.",
+    user
+  })
+});
+
+// const updateUserCoverImage = asyncHandler(async (req, res) => {
+//   const coverImageLocalPath = req.file?.path;
+
+//   if(!coverImageLocalPath) {
+//     return res.status(400).json({
+//       status: 400,
+//       error: "Cover image file is missing."
+//     })
+//   }
+
+//   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+//   if(!coverImage.url) {
+//     return res.status(400).json({
+//       status: 400,
+//       error: "Error while uploading cover image."
+//     })
+//   }
+
+//   const user = await User.findByIdAndUpdate(
+//     req.user?._id,
+//     {
+//       $set: {
+//         coverImage: coverImage.url
+//       }
+//     },
+//     {new : true}
+//   ).select("-password");
+
+//   return res.status(200).json({
+//     status: 200,
+//     message: "Cover image file updated successfully.",
+//     user
+//   })
+// })
+
 export {
   registerUser,
   loginUser,
@@ -329,4 +401,5 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
+  updateUserAvatar
 };
