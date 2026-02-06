@@ -357,41 +357,41 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   })
 });
 
-// const updateUserCoverImage = asyncHandler(async (req, res) => {
-//   const coverImageLocalPath = req.file?.path;
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
 
-//   if(!coverImageLocalPath) {
-//     return res.status(400).json({
-//       status: 400,
-//       error: "Cover image file is missing."
-//     })
-//   }
+  if(!coverImageLocalPath) {
+    return res.status(400).json({
+      status: 400,
+      error: "Cover image file is missing."
+    })
+  }
 
-//   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
-//   if(!coverImage.url) {
-//     return res.status(400).json({
-//       status: 400,
-//       error: "Error while uploading cover image."
-//     })
-//   }
+  if(!coverImage.url) {
+    return res.status(400).json({
+      status: 400,
+      error: "Error while uploading cover image."
+    })
+  }
 
-//   const user = await User.findByIdAndUpdate(
-//     req.user?._id,
-//     {
-//       $set: {
-//         coverImage: coverImage.url
-//       }
-//     },
-//     {new : true}
-//   ).select("-password");
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: coverImage.url
+      }
+    },
+    {new : true}
+  ).select("-password");
 
-//   return res.status(200).json({
-//     status: 200,
-//     message: "Cover image file updated successfully.",
-//     user
-//   })
-// })
+  return res.status(200).json({
+    status: 200,
+    message: "Cover image file updated successfully.",
+    user
+  })
+})
 
 export {
   registerUser,
