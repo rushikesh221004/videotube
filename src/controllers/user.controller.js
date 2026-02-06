@@ -229,7 +229,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       });
     }
 
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken} =
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
       await generateAccessAndRefreshTokens(user._id);
 
     return res
