@@ -252,4 +252,81 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+
+  if (!(newPassword === confirmPassword)) {
+    return res.status(401).json({
+      status: 401,
+      error: "New password and confirm password must be same.",
+    });
+  }
+
+  const user = await User.findById(req.user?._id);
+
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordCorrect) {
+    return res.status(400).json({
+      status: 400,
+      error: "Please enter a correct old password.",
+    });
+  }
+
+  user.password = newPassword;
+
+  await user.save({
+    validateBeforeSave: false,
+  });
+
+  return res.status(200).json({
+    status: 200,
+    message: "Password changed successfully.",
+  });
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res.status(200).json({
+    status: 200,
+    message: "Current user fetched successfully.",
+    user: req.user,
+  });
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName, email } = req.body;
+
+  if (!email || !fullName) {
+    return res.status(401).json({
+      status: 401,
+      error: "Atleast one field is required.",
+    });
+  }
+
+  const user = await User.findById(
+    req.user?._id,
+    {
+      $set: {
+        fullName,
+        email: email,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  return res.status(200).json({
+    status: 200,
+    message: "Account details updated successfully.",
+    user,
+  });
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+};
