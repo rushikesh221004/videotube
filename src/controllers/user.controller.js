@@ -3,6 +3,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.util.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { deleteImageFromCloudinary } from "../utils/deleteImage.util.js";
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ const registerUser = asyncHandler(async (req, res) => {
       error: "User already exist.",
     });
   }
+
   // console.log("IMAGE FILES: ", req.files);
   const avatarLocalPath = req.files?.avatar[0]?.path;
   let coverImageLocalPath;
@@ -90,8 +92,16 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const user = await User.create({
     fullName,
-    avatar: avatar.url,
-    coverImage: coverImage?.url ?? null,
+    avatar: {
+      url: avatar?.url,
+      publicId: avatar?.public_id,
+    },
+    coverImage: coverImage
+      ? {
+          url: coverImage?.url,
+          publicId: coverImage?.public_id,
+        }
+      : null,
     email,
     password,
     username: username.toLowerCase(),
@@ -324,74 +334,93 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 const updateUserAvatar = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
 
-  if(!avatarLocalPath) {
+  if (!avatarLocalPath) {
     return res.status(400).json({
       status: 400,
-      error: "Avatar file is missing."
+      error: "Avatar file is missing.",
+    });
+  }
+
+  const loginUser = await User.findById(req.user?._id);
+
+  const result = await deleteImageFromCloudinary(loginUser.avatar.publicId);
+
+  if (!result.success) {
+    return res.status(400).json({
+      status: false,
+      error: "Cloudinary delete failed."
     })
+  }
+
+  if (loginUser && loginUser.avatar) {
+    loginUser.avatar.url = null;
+    loginUser.avatar.publicId = null;
   }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
 
-  if(!avatar.url) {
+  if (!avatar.url) {
     return res.status(400).json({
       status: 400,
-      error: "Error while uploading avatar."
-    })
+      error: "Error while uploading avatar.",
+    });
   }
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        avatar: avatar.url
-      }
+        avatar: {
+          url: avatar?.url,
+          publicId: avatar?.public_id,
+        },
+      },
     },
-    {new: true}
-  ).select("-password");
+    { new: true }
+  ).select("-password -refreshToken");
 
   return res.status(200).json({
     status: 200,
     message: "Avatar file updated successfully.",
-    user
-  })
+    user,
+  });
 });
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.file?.path;
 
-  if(!coverImageLocalPath) {
+  if (!coverImageLocalPath) {
     return res.status(400).json({
       status: 400,
-      error: "Cover image file is missing."
-    })
+      error: "Cover image file is missing.",
+    });
   }
 
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
-  if(!coverImage.url) {
+  if (!coverImage.url) {
     return res.status(400).json({
       status: 400,
-      error: "Error while uploading cover image."
-    })
+      error: "Error while uploading cover image.",
+    });
   }
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        coverImage: coverImage.url
-      }
+        coverImage: coverImage.url,
+      },
     },
-    {new : true}
+    { new: true }
   ).select("-password");
 
   return res.status(200).json({
     status: 200,
     message: "Cover image file updated successfully.",
-    user
-  })
-})
+    user,
+  });
+});
 
 export {
   registerUser,
@@ -402,5 +431,5 @@ export {
   getCurrentUser,
   updateAccountDetails,
   updateUserAvatar,
-  updateUserCoverImage
+  updateUserCoverImage,
 };
