@@ -20,9 +20,7 @@ const deleteImageFromCloudinary = async (publicId) => {
     }
 
     // upload the file on cloudinary
-    await cloudinary.uploader.destroy(publicId, {
-      resource_type: "auto",
-    });
+    await cloudinary.uploader.destroy(publicId);
 
   } catch (error) {
     return res.status(500).json({
