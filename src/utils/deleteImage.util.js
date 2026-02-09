@@ -5,7 +5,7 @@ const deleteImageFromCloudinary = async (
   resourceType = "image"
 ) => {
   if (!publicId) return { success: false, reason: "NO_PUBLIC_ID" };
-
+  console.log("RESULT = ", publicId);
   try {
     const result = await cloudinary.uploader.destroy(publicId, {
       resource_type: resourceType,
