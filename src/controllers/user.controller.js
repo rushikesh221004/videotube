@@ -398,7 +398,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
   const loginUser = await User.findById(req.user?._id);
 
-  if (loginUser.coverImage.url && loginUser.coverImage.publicId) {
+  if (loginUser.coverImage !== null) {
     const result = await deleteImageFromCloudinary(
       loginUser.coverImage.publicId
     );
@@ -410,8 +410,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
       });
     }
 
-    loginUser.coverImage.url = null;
-    loginUser.coverImage.publicId = null;
+    loginUser.coverImage = null;
   }
 
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
@@ -428,8 +427,8 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     {
       $set: {
         coverImage: {
-          url: avatar?.url,
-          publicId: avatar?.public_id,
+          url: coverImage?.url,
+          publicId: coverImage?.public_id,
         },
       },
     },
@@ -443,6 +442,44 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   });
 });
 
+const deleteUserCoverImage = asyncHandler(async (req, res) => {
+  const loginUser = await User.findById(req.user?._id);
+
+  if (!loginUser) {
+    return res.status(400).json({
+      status: 400,
+      error: "User not found.",
+    });
+  }
+
+  if (loginUser.coverImage == null) {
+    return res.status(400).json({
+      status: 400,
+      error: "You don't have any cover image to delete.",
+    });
+  }
+
+  const deleteImage = await deleteImageFromCloudinary(
+    loginUser.coverImage.publicId
+  );
+
+  if (!deleteImage.success) {
+    return res.status(400).json({
+      status: false,
+      error: "Cloudinary delete failed.",
+    });
+  }
+
+  loginUser.coverImage = null;
+
+  await loginUser.save();
+
+  return res.status(200).json({
+    status: 200,
+    message: "Cover image deleted successfully.",
+  });
+});
+
 export {
   registerUser,
   loginUser,
@@ -453,4 +490,5 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  deleteUserCoverImage,
 };
