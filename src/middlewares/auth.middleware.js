@@ -24,7 +24,7 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
             return res.status(401).json({
                 // Discuss about frontend
                 status: 401,
-                error: "Invalid Access Token,"
+                error: "USER NOT FOUND.",
             })
         }
     
