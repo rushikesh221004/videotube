@@ -480,6 +480,52 @@ const deleteUserCoverImage = asyncHandler(async (req, res) => {
   });
 });
 
+const deleteUserAccount = asyncHandler(async (req, res) => {
+  const loginUser = await User.findById(req.user?._id);
+
+  if (!loginUser) {
+    return res.status(400).json({
+      status: 200,
+      error: "User not found.",
+    });
+  }
+
+  const deleteAvatarImage = await deleteImageFromCloudinary(
+    loginUser.avatar.publicId
+  );
+
+  if (!deleteAvatarImage.success) {
+    return res.status(400).json({
+      status: false,
+      error: "Avatar image deletion failed from cloudinary.",
+    });
+  }
+
+  if (loginUser.coverImage !== null) {
+    const deleteCoverImage = await deleteImageFromCloudinary(
+      loginUser.coverImage.publicId
+    );
+
+    if (!deleteCoverImage.success) {
+      return res.status(400).json({
+        status: false,
+        error: "Cover image deletion failed from cloudinary.",
+      });
+    }
+  }
+
+  await User.findByIdAndDelete(req.user?._id);
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
+    .json({
+      status: 200,
+      message: "User account deleted successfully.",
+    });
+});
+
 export {
   registerUser,
   loginUser,
@@ -491,4 +537,5 @@ export {
   updateUserAvatar,
   updateUserCoverImage,
   deleteUserCoverImage,
+  deleteUserAccount,
 };
