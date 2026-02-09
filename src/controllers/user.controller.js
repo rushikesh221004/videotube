@@ -348,8 +348,8 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   if (!result.success) {
     return res.status(400).json({
       status: false,
-      error: "Cloudinary delete failed."
-    })
+      error: "Cloudinary delete failed.",
+    });
   }
 
   if (loginUser && loginUser.avatar) {
@@ -396,6 +396,24 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     });
   }
 
+  const loginUser = await User.findById(req.user?._id);
+
+  if (loginUser.coverImage.url && loginUser.coverImage.publicId) {
+    const result = await deleteImageFromCloudinary(
+      loginUser.coverImage.publicId
+    );
+
+    if (!result.success) {
+      return res.status(400).json({
+        status: false,
+        error: "Cloudinary delete failed.",
+      });
+    }
+
+    loginUser.coverImage.url = null;
+    loginUser.coverImage.publicId = null;
+  }
+
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!coverImage.url) {
@@ -409,11 +427,14 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     req.user?._id,
     {
       $set: {
-        coverImage: coverImage.url,
+        coverImage: {
+          url: avatar?.url,
+          publicId: avatar?.public_id,
+        },
       },
     },
     { new: true }
-  ).select("-password");
+  ).select("-password -refreshToken");
 
   return res.status(200).json({
     status: 200,
