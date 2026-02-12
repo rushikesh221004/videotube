@@ -4,6 +4,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.util.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { deleteImageFromCloudinary } from "../utils/deleteImage.util.js";
+import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -611,6 +612,58 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   })
 });
 
+const getWatchHistory = asyncHandler(async (req, res) => {
+  const user = await User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user?._id)
+      }
+    },
+
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    fullName: 1,
+                    username: 1,
+                    avatar: 1
+                  }
+                }
+              ]
+            }
+          },
+
+          {
+            $add: {
+              owner: {
+                $first: "$owner"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]);
+
+  return res.status(200).json({
+    status: 200,
+    message: "Watch history fetched successfully.",
+    watchHistory: user[0].watchHistory
+  })
+})
+
 export {
   registerUser,
   loginUser,
@@ -624,4 +677,5 @@ export {
   deleteUserCoverImage,
   deleteUserAccount,
   getUserChannelProfile,
+  getWatchHistory
 };
